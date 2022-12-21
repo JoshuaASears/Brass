@@ -1,57 +1,47 @@
 from string import ascii_uppercase, ascii_lowercase, digits
 from random import choice, shuffle
-import json
-import csv
-
-# TODO: date/time stamp for creating new key
-# TODO: switch data persistence from JSON to db using sqlite
+import sqlite3
 
 
 class KeyRing:
     """
-    For a user, stores a history of keys per username per domain.
+    For a user, stores current and previous keys per username per domain.
     """
 
     def __init__(self, name):
-        self._owner = name
-        self._keys = dict()  # {domain: {username: [history of keys]}}
+        """Initialize KeyRing data by name."""
+        self._name = name
+        self._db = None
 
-    def get_owner(self):
-        """Returns name of KeyRing as string."""
-        return self._owner
+        self.create_connection(name)
+        self.create_table()
 
-    def get_keys(self):
-        """Returns KeyRing as dictionary {domain: {username: [history of keys]}}"""
-        return self._keys
+    def create_connection(self, name):
+        try:
+            self._db = sqlite3.connect(f'.\\data\\{name}.db')
+        except sqlite3.Error as e:
+            print(e)
 
-    def get_domains_usernames(self):
-        """Returns list [(domain, [usernames])]."""
-        domains_usernames = []
-        for domain in self._keys:
-            domains_usernames.append((domain, list(self._keys[domain])))
-        return domains_usernames
+    def create_table(self):
+        """Creates keyring table if it doesn't exist."""
+        sql_create_table = """
+                CREATE TABLE IF NOT EXISTS keyring(
+                    domain TEXT,
+                    username TEXT,
+                    key TEXT,
+                    date_updated TEXT);
+                    """
+        try:
+            self._db.cursor().execute(sql_create_table)
+        except sqlite3.Error as e:
+            print(e)
 
-    def get_current_key(self, domain, username):
-        """Returns last key in the history of keys for that domain and username."""
-        if domain in self._keys:
-            if username in self._keys[domain]:
-                return self._keys[domain][username][-1]
-
-    def add_domain(self, domain):
-        """Adds domain to keys dictionary."""
-        if domain not in self._keys:
-            self._keys[domain] = dict()
-
-    def add_username(self, domain, username):
-        """Adds username to a domain in the keys dictionary."""
-        if domain in self._keys:
-            if username not in self._keys[domain]:
-                self._keys[domain][username] = []
-
-    def create_new_key(self, domain, username, length=14, contains=("U", "L", "D", "S"), special="!@#$%^&*+=?[]()`~"):
+    def create_new_key(self, length=14, contains=("U", "L", "D", "S"), special="!@#$%^&*+=?[]()`~"):
         """
         Randomly generates a key for the domain and username.
-        *contains specifies which of Uppercase, Lowercase, Digits, and Special characters are included.
+        *contains toggles use of Uppercase, Lowercase, Digits, and Special characters.
+        *Special is set to a default set but can receive a custom string.
+        Returns new key as string.
         """
 
         # possible sets of characters which *contains will cross-reference
@@ -80,29 +70,16 @@ class KeyRing:
         # shuffle, join to string, add to KeyRing
         shuffle(new_key_builder)
         new_key = ''.join(new_key_builder)
-        self._keys[domain][username].append(new_key)
 
-    def export_keyring_json(self):
-        """Exports object as self._owner.JSON"""
-        with open(f'.\\data\\{self._owner}.json', 'w') as outfile:
-            json.dump({self._owner: self._keys}, outfile, indent=4, sort_keys=True)
+        return new_key
 
-    def import_keyring_json(self):
-        """Imports over current data. Returns error message if file not found."""
-        try:
-            with open(f'.\\data\\{self._owner}.json', 'r') as infile:
-                self._keys = json.load(infile)[self._owner]
-        except FileNotFoundError as error:
-            return error
-
-    def export_keyring_csv(self):
-        pass
-
-    def import_keyring_csv(self):
-        pass
-
-    def save_db(self):
-        pass
-
-    def load_db(self):
-        pass
+    def update_table(self, update):
+        """
+        update: (domain:str, username:str, key:str, date_updated:str)
+        """
+        sql = """
+            INSERT INTO keyring(domain, username, key, date_updated)
+                VALUES(?, ?, ?, ?);
+            """
+        self._db.cursor().execute(sql, update)
+        self._db.commit()
