@@ -25,12 +25,12 @@ class KeyRing:
     def create_table(self):
         """Creates keyring table if it doesn't exist."""
         sql_create_table = """
-                CREATE TABLE IF NOT EXISTS keyring(
-                    domain TEXT,
-                    username TEXT,
-                    key TEXT,
-                    date_updated TEXT);
-                    """
+            CREATE TABLE IF NOT EXISTS keyring(
+                domain TEXT,
+                username TEXT,
+                key TEXT,
+                date_updated TEXT);
+                """
         try:
             self._db.cursor().execute(sql_create_table)
         except sqlite3.Error as e:
@@ -79,7 +79,32 @@ class KeyRing:
         """
         sql = """
             INSERT INTO keyring(domain, username, key, date_updated)
-                VALUES(?, ?, ?, ?);
+            VALUES(?, ?, ?, ?);
             """
         self._db.cursor().execute(sql, update)
         self._db.commit()
+
+    def query_domain(self):
+        """Queries KeyRing db for domains."""
+        sql = """
+            SELECT DISTINCT domain
+            FROM keyring
+            ORDER BY domain
+            """
+        cursor = self._db.cursor()
+        cursor.execute(sql)
+
+        return cursor.fetchall()
+
+    def query_username(self, domain=''):
+        """Queries KeyRing db for domains."""
+        sql = f"""
+            SELECT DISTINCT username
+            FROM keyring
+            WHERE domain = '{domain}'
+            ORDER BY username
+            """
+        cursor = self._db.cursor()
+        cursor.execute(sql)
+
+        return cursor.fetchall()

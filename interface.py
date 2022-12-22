@@ -3,72 +3,99 @@ from tkinter import ttk
 import keyring as kr
 
 
-class UserFrame(ttk.Frame):
-    """Initial application frame for user to input name"""
-    def __init__(self, container):
-        super().__init__(container)
-        self._window = container
+class ProfileFrame(ttk.Frame):
+    """Application frame to initialize Profile and associated KeyRing."""
+    def __init__(self, app_window):
+        super().__init__(app_window)
+        self._window = app_window
         self._window.window_size(300, 100)
-        self._username = self.make_widgets()
         self.pack(expand=True)
+        self.make_widgets()
 
     def make_widgets(self):
-        """Adds entry and button to Frame to get username string."""
+        """Adds entry and button to Frame to get profile string."""
+
+        def initialize_user(event=None):
+            """Handler 'enter profile' button clicked or entry <Return> event."""
+
+            # initialize KeyRing object with profile string, return if no string
+            if event is None:
+                profile = entered_string.get()
+            else:
+                profile = event.widget.get()
+            if not profile:
+                return
+            keyring = kr.KeyRing(profile)
+
+            # initialize and raise ManagerFrame, terminate ProfileFrame
+            ManagerFrame(self._window, profile, keyring).tkraise()
+            self.destroy()
+
         # username entry with Return binding
-        username = tk.StringVar()
-        username_entry = ttk.Entry(self, textvariable=username)
-        username_entry.bind('<Return>', self.initialize_user)
-        username_entry.focus()
-        username_entry.pack(side=tk.LEFT, expand=True, fill=tk.X, padx=10)
+        entered_string = tk.StringVar()
+        profile_entry = ttk.Entry(self, textvariable=entered_string)
+        profile_entry.bind('<Return>', initialize_user)
+        profile_entry.focus()
+        profile_entry.pack(side=tk.LEFT, expand=True, fill=tk.X, padx=10)
 
         # button
-        get_name_button = ttk.Button(self, text="enter name")
-        get_name_button['command'] = self.initialize_user
-        get_name_button.pack(side=tk.RIGHT, expand=True, fill=tk.X, padx=10)
-
-        return username
-
-    def initialize_user(self, event=None):
-        """Handle 'enter name' button clicked or entry <Return> event."""
-
-        # initialize KeyRing object with user string, return if no string
-        user = self._username.get()
-        if not user:
-            return
-        keyring = kr.KeyRing(user)
-
-        # raise ControlFrame, terminate UserFrame
-        ControlFrame(self._window, keyring, user).tkraise()
-        self.destroy()
+        get_profile_button = ttk.Button(self, text="enter profile", command=initialize_user)
+        get_profile_button.pack(side=tk.RIGHT, expand=True, fill=tk.X, padx=10)
 
 
-class ControlFrame(ttk.Frame):
+class ManagerFrame(ttk.Frame):
     """Control frame of the application after user has entered name."""
-    def __init__(self, container, keyring, user):
-        super().__init__(container)
-        self._window = container
-        self._window.window_size(500, 500)
+    def __init__(self, app_window, profile, keyring):
+        super().__init__(app_window)
+        self._window = app_window
+        self._profile = profile
         self._keyring = keyring
-        self._user = user
-        self.pack(expand=True)
 
-        # domain selection
-        # username selection
+        self._window.window_size(300, 300)
 
-    # TODO: select domain and username or add new
-    # SQL query to populate combobox or listbox
+        self.pack()
 
-    # TODO: get current password of selection
+        self.make_widgets()
 
-    # TODO: create new password for selection
+    def make_widgets(self):
+        """"""
+        def domain_selected(event):
+            """Event handling for domain selection."""
+            selected = event.widget.get()
+            # sets username combox to queried values of existing distinct usernames
+            username_combo['values'] = self._keyring.query_username(selected)
 
-    # TODO: copy password from selected username/domain to another
+        # domain selection: label, sql query, combobox
+        domain_label = ttk.Label(self, text='Domain')
+        domain_label.pack()
 
-    # TODO: import/export data via JSON/CSV
+        domain_query = self._keyring.query_domain()
 
-    # TODO: close sql connection and exit program
+        domain_combo = ttk.Combobox(self)
+        domain_combo['values'] = domain_query
+        domain_combo.bind('<<ComboboxSelected>>', domain_selected)
+        domain_combo.pack()
 
-    # TODO: close sql connection and change user
+        # username selection: label, sql query based on domain selection, combox
+        username_label = ttk.Label(self, text='Username')
+        username_label.pack()
+
+        username_combo = ttk.Combobox(self)
+        username_combo.pack()
+
+        # horizontal separator
+        separator = ttk.Separator(self, orient='horizontal')
+        separator.pack(pady=5, fill='x')
+
+        # TODO: get current password button
+
+        # TODO: generate password button
+
+        # TODO: password entry
+
+        # TODO: export password list button
+
+        # TODO: commit exit button: close sql connection
 
 
 class App(tk.Tk):
@@ -90,5 +117,5 @@ class App(tk.Tk):
 
 if __name__ == '__main__':
     app = App()
-    frame = UserFrame(app)
+    frame = ProfileFrame(app)
     tk.mainloop()
