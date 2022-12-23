@@ -1,5 +1,3 @@
-from string import ascii_uppercase, ascii_lowercase, digits
-from random import choice, shuffle
 import sqlite3
 
 
@@ -36,43 +34,6 @@ class KeyRing:
         except sqlite3.Error as e:
             print(e)
 
-    def create_new_key(self, length=14, contains=("U", "L", "D", "S"), special="!@#$%^&*+=?[]()`~"):
-        """
-        Randomly generates a key for the domain and username.
-        *contains toggles use of Uppercase, Lowercase, Digits, and Special characters.
-        *Special is set to a default set but can receive a custom string.
-        Returns new key as string.
-        """
-
-        # possible sets of characters which *contains will cross-reference
-        characters = {
-            "U": ascii_uppercase,
-            "L": ascii_lowercase,
-            "D": digits,
-            "S": special
-        }
-
-        new_key_builder = []
-        all_characters = ""
-
-        for mand_char in contains:
-            # add one of each mandatory character
-            new_key_builder.append(choice(characters[mand_char]))
-            # build total character set for next stage
-            all_characters = all_characters + characters[mand_char]
-            length -= 1
-
-        # populate remaining length with random char from all_character set
-        while length > 0:
-            new_key_builder.append(choice(all_characters))
-            length -= 1
-
-        # shuffle, join to string, add to KeyRing
-        shuffle(new_key_builder)
-        new_key = ''.join(new_key_builder)
-
-        return new_key
-
     def update_table(self, update):
         """
         update: (domain:str, username:str, key:str, date_updated:str)
@@ -84,27 +45,32 @@ class KeyRing:
         self._db.cursor().execute(sql, update)
         self._db.commit()
 
-    def query_domain(self):
-        """Queries KeyRing db for domains."""
-        sql = """
-            SELECT DISTINCT domain
-            FROM keyring
-            ORDER BY domain
-            """
+    def fetch_query(self, domain=False, username=False):
+        """Queries KeyRing db for most recent key by domain and username."""
+        sql = ''
+        if not domain:
+            sql = """
+                SELECT DISTINCT domain
+                FROM keyring
+                ORDER BY domain;
+                """
+        elif domain and not username:
+            sql = f"""
+                SELECT DISTINCT username
+                FROM keyring
+                WHERE domain = '{domain}'
+                ORDER BY username;
+                """
+        elif username:
+            sql = f"""
+                SELECT key
+                FROM keyring
+                WHERE date_updated = (
+                    SELECT MAX(date_updated)
+                    FROM keyring
+                    WHERE domain = '{domain}' AND username = '{username}');
+                """
         cursor = self._db.cursor()
         cursor.execute(sql)
-
-        return cursor.fetchall()
-
-    def query_username(self, domain=''):
-        """Queries KeyRing db for domains."""
-        sql = f"""
-            SELECT DISTINCT username
-            FROM keyring
-            WHERE domain = '{domain}'
-            ORDER BY username
-            """
-        cursor = self._db.cursor()
-        cursor.execute(sql)
-
-        return cursor.fetchall()
+        # remove beginning "{" and ending "}" string formatting added by SQLite
+        return [x[0].strip('{').rstrip('}') for x in cursor.fetchall()]
