@@ -61,11 +61,16 @@ class ManagerFrame(ttk.Frame):
         """Executes ManagerFrame assets."""
 
         def reset_displays(domain_field=False, username_field=False, key_field=False):
-            """Clears display string associated combobox(es) and entry widgets."""
+            """Clears associated display strings, disables widgets below it."""
+
             if domain_field:
                 domain_combo.set('')
+                username_combo.state(['disabled'])
             if username_field:
                 username_combo.set('')
+                key_entry.state(['disabled'])
+                generate_button.state(['disabled'])
+                commit_button.state(['disabled'])
             if key_field:
                 key_string.set('')
 
@@ -99,8 +104,12 @@ class ManagerFrame(ttk.Frame):
             if combobox is domain_combo:
                 username_update()
                 reset_displays(False, True, True)
+                username_combo.state(['!disabled'])
             elif combobox is username_combo:
                 key_update()
+                key_entry.state(['!disabled'])
+                generate_button.state(['!disabled'])
+                commit_button.state(['!disabled'])
 
         def generate_new_key():
             """Randomly generates a key and displays in key_combobox."""
@@ -189,9 +198,9 @@ class ManagerFrame(ttk.Frame):
         commit_button = ttk.Button(self, text="Commit Key", command=commit_key)
         commit_button.pack()
 
+        # begin fetch sequence. requires all widgets to be placed
         domain_update()
 
-        # TODO: grey out widgets when entries have not been selected
         # TODO: export password list button (text, json, csv?)
         # TODO: commit exit button: close sql connection
         # TODO: add configure options(LabelFrame) to pass into keyring.create_new_key
