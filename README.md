@@ -1,8 +1,9 @@
 <h1> NakedKeyRing </h1>
+<p>
 A totally naked keyring for creating and storing passwords.
 Not encrypted. Must be used someplace safe or all your passwords become at risk!
-
-v1 Setup
+</p>
+<p>v1 Setup
 <ul>
   <li>not compiled</li>
   <li>requires python 3</li>
@@ -10,3 +11,4 @@ v1 Setup
   <li>database stored in root\data</li>
   <li>"export .txt" exports to root folder</li
 </ul>
+</p>
