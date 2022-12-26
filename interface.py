@@ -1,29 +1,36 @@
+# for gui
 import tkinter as tk
 from tkinter import ttk
+# for key string generator
 from string import ascii_uppercase, ascii_lowercase, digits
 from random import choice, shuffle
-import time
+# for database api
 import keyring as kr
+import time
 
 
 class ProfileFrame(ttk.Frame):
-    """Initial frame of app.: gets Profile str. and initializes KeyRing object."""
+    """Initial frame of app.:
+    users enter string to initialize KeyRing object with associated .db."""
+
     def __init__(self, app_window):
         super().__init__(app_window)
         self._window = app_window
         self._window.window_size(250, 80)
-        self.pack(expand=True)
+        self.pack(fill=tk.BOTH, expand=True)
 
-        # username entry with Return binding
+        widget_options = {'side': tk.LEFT, 'expand': True, 'fill': tk.X, 'padx': 10}
+
+        # username string object with entry field
         self.entered_string = tk.StringVar()
         self.profile_entry = ttk.Entry(self, textvariable=self.entered_string)
         self.profile_entry.bind('<Return>', self.initialize_user)
         self.profile_entry.focus()
-        self.profile_entry.pack(side=tk.LEFT, expand=True, fill=tk.X, padx=10)
+        self.profile_entry.pack(**widget_options)
 
         # button
         self.get_profile_button = ttk.Button(self, text="Enter Profile", command=self.initialize_user)
-        self.get_profile_button.pack(side=tk.RIGHT, expand=True, fill=tk.X, padx=10)
+        self.get_profile_button.pack(**widget_options)
 
     def initialize_user(self, event=None):
         """Handler for 'enter profile' button clicked or entry <Return> event."""
@@ -43,7 +50,8 @@ class ProfileFrame(ttk.Frame):
 
 
 class ManagerFrame(ttk.Frame):
-    """Form interface for fetching/adding/updating data."""
+    """Form interface for fetching/adding/updating/exporting KeyRing data."""
+
     def __init__(self, app_window, profile, keyring):
         super().__init__(app_window)
         self._window = app_window
@@ -52,9 +60,10 @@ class ManagerFrame(ttk.Frame):
         self._window.window_size(250, 325)
         self.pack(fill=tk.BOTH, padx=5, pady=5)
 
+        # options for domain/username/key group of widgets at top of frame
         top_field_options = {'fill': tk.X, 'padx': 10}
 
-        # domain selection: label, combobox = sql query result
+        # domain selection: label, combobox = sql query
         self.domain_label = ttk.Label(self, text='Domain')
         self.domain_label.pack(top_field_options)
 
@@ -74,11 +83,11 @@ class ManagerFrame(ttk.Frame):
         self.username_combo.bind('<<ComboboxSelected>>', self.selection)
         self.username_combo.pack(top_field_options)
 
-        # horizontal separator
+        # horizontal separator: divides domain/username from Key functions
         self.separator = ttk.Separator(self, orient='horizontal')
         self.separator.pack(**top_field_options, pady=10)
 
-        # key display: label, entry = sql query (domain, username, most recent)
+        # Key display: label, entry = sql query (domain, username, most recent)
         self.key_label = ttk.Label(self, text='Key')
         self.key_label.pack(**top_field_options)
 
@@ -86,6 +95,7 @@ class ManagerFrame(ttk.Frame):
         self.key_entry = ttk.Entry(self, textvariable=self.key_string)
         self.key_entry.pack(**top_field_options)
 
+        # lower window group including Key buttons and Key generation options
         lower_frame_options = {'fill': tk.BOTH, 'side': tk.LEFT, 'padx': 10, 'pady': 10}
         button_options = {'fill': tk.BOTH, 'expand': True, 'pady': 3}
         # buttons frame
@@ -110,14 +120,14 @@ class ManagerFrame(ttk.Frame):
                                             command=self.export_txt)
         self.export_txt_button.pack(**button_options)
 
-        # key options: LabelFrame
+        # key options: LabelFrame to house checkboxes, spinbox, and entry
         self.key_options = ttk.LabelFrame(self, text="Include:")
         self.key_options.pack(**lower_frame_options)
 
         options_config_single = {'anchor': tk.W, 'padx': 5, 'pady': 3}
         options_config_double ={'side': tk.LEFT, 'padx': 5, 'pady': 3}
 
-        # contains lower alphabet checkbox
+        # checkbox for whether new key contains lowercase alphabet characters
         self.lower_checkbox_v = tk.StringVar(value=ascii_lowercase)
         self.lower_checkbox = ttk.Checkbutton(self.key_options,
                                               text="lower a:z",
@@ -126,7 +136,7 @@ class ManagerFrame(ttk.Frame):
                                               offvalue='')
         self.lower_checkbox.pack(**options_config_single)
 
-        # contains upper alphabet checkbox
+        # checkbox for whether new key contains uppercase alphabet characters
         self.upper_checkbox_v = tk.StringVar(value=ascii_uppercase)
         self.upper_checkbox = ttk.Checkbutton(self.key_options,
                                               text="upper A:Z",
@@ -135,7 +145,7 @@ class ManagerFrame(ttk.Frame):
                                               offvalue='')
         self.upper_checkbox.pack(**options_config_single)
 
-        # contains numeric checkbox
+        # checkbox for whether new key contains numeric characters
         self.numeric_checkbox_v = tk.StringVar(value=digits)
         self.numeric_checkbox = ttk.Checkbutton(self.key_options,
                                                 text="numeric 0:9",
@@ -144,18 +154,18 @@ class ManagerFrame(ttk.Frame):
                                                 offvalue='')
         self.numeric_checkbox.pack(**options_config_single)
 
-        # contains special entry
+        # entry for whether new key contains special alphabet characters
         self.special_entry_v = tk.StringVar(value="!@#$%^&*+=`~?")
         self.special_entry = ttk.Entry(self.key_options,
                                        textvariable=self.special_entry_v)
         self.special_entry.pack(**options_config_single)
 
-        # length label
+        # label for label associated with length spinbox
         self.length_label = ttk.Label(self.key_options,
                                       text="Length:")
         self.length_label.pack(**options_config_double)
 
-        # length spinbox
+        # spinbox for selecting character length for new key
         self.length_value = tk.IntVar(value=14)
         self.length_spinbox = ttk.Spinbox(self.key_options,
                                           from_=4,
@@ -164,11 +174,17 @@ class ManagerFrame(ttk.Frame):
                                           wrap=False)
         self.length_spinbox.pack(**options_config_double)
 
-        # begin fetch sequence. requires all widgets to be placed
+        # finished populating widgets: begin fetch sequence
         self.domain_update()
+        # fetch sequence = responsiveness for activating/deactivating or clearing widgets
+        # based on current available data
 
     def reset_displays(self, domain_field=False, username_field=False, key_field=False):
-        """Clears associated display strings, disables widgets below it."""
+        """
+        Widget display hierarchy: 1. domain 2. username 3.key.
+        Widgets lower in the hierarchy should not display information or be available
+        to interact with if preceding information in the hierarchy is not present.
+        """
 
         if domain_field:
             self.domain_combo.set('')
@@ -182,10 +198,12 @@ class ManagerFrame(ttk.Frame):
             self.numeric_checkbox_v.set(value=digits)
             self.special_entry_v.set('!@#$%^&*+=`~?')
 
+            # key entry/button group
             self.key_entry.state(['disabled'])
             self.generate_button.state(['disabled'])
             self.commit_button.state(['disabled'])
 
+            # key options group
             self.key_options.state(['disabled'])
             self.lower_checkbox.state(['disabled'])
             self.upper_checkbox.state(['disabled'])
@@ -202,14 +220,14 @@ class ManagerFrame(ttk.Frame):
         self.domain_combo.focus()
 
     def username_update(self):
-        """Updates dates username combobox list and clears username, key displays."""
+        """Updates dates username combobox list and activates username combobox.."""
 
         domain = self.domain_combo.get()
         self.username_combo.configure(values=self._keyring.fetch_query(domain))
         self.username_combo.state(['!disabled'])
 
     def key_update(self):
-        """Fetches and displays key."""
+        """Fetches and displays key if available, activates all key related widgets."""
 
         domain = self.domain_combo.get()
         username = self.username_combo.get()
@@ -232,7 +250,9 @@ class ManagerFrame(ttk.Frame):
         self.length_spinbox.state(['!disabled'])
 
     def selection(self, *args):
-        """Event handling for domain/username selection."""
+        """Handler for domain/username selection or custom entry."""
+
+        # determines if method was triggered by <<ComboboxSelected>> event
         combobox = None
         for arg in args:
             if type(arg) is tk.Event:
@@ -251,19 +271,24 @@ class ManagerFrame(ttk.Frame):
             self.key_update()
 
     def generate_new_key(self):
-        """Randomly generates a key and displays in key_combobox."""
-        print(type(self.length_spinbox.get()))
+        """Handler for generate key button. Randomly generates a key and
+        displays in key_combobox."""
+
+        # new key is generated as list of characters to take advantage of random module
+        new_key_builder = []
+        # accumulator for all viable character selection
+        all_characters = ''
+
+        # updates key options from options frame widgets
         length = int(self.length_spinbox.get())
         string_lists = [self.lower_checkbox_v,
                         self.upper_checkbox_v,
                         self.numeric_checkbox_v,
                         self.special_entry_v]
-        new_key_builder = []
-        all_characters = ''
 
+        # ensures that one of each type of characters are present
         for category in string_lists:
             if category.get():
-                # add one of each type of mandatory character
                 new_key_builder.append(choice(category.get()))
                 # build total character set for next stage
                 all_characters = all_characters + category.get()
@@ -274,13 +299,14 @@ class ManagerFrame(ttk.Frame):
             new_key_builder.append(choice(all_characters))
             length -= 1
 
-        # shuffle, join to string, display
+        # shuffle, join list to string, display in Key entry
         shuffle(new_key_builder)
         new_key = ''.join(new_key_builder)
         self.key_string.set(new_key)
 
     def commit_key(self):
-        """Commits key in key display to db."""
+        """Handler for Save Key button. Commits key in key display to db.
+        Commit method of KeyRing object requires (domain, username, key, date/time)"""
 
         domain = self.domain_combo.get()
         username = self.username_combo.get()
@@ -294,13 +320,15 @@ class ManagerFrame(ttk.Frame):
         self.domain_update()
 
     def export_txt(self):
-        """Calls export function of Keyring to .txt file."""
+        """Handler for Export .txt Button.
+        Calls export function of Keyring to .txt file."""
 
         self._keyring.export_txt()
 
 
 class App(tk.Tk):
     """Root window of application."""
+
     def __init__(self):
         super().__init__()
 
@@ -309,7 +337,9 @@ class App(tk.Tk):
         self.iconbitmap('./icon/keyring.ico')
 
     def window_size(self, width, height):
-        """Takes width and height. Centers application on screen."""
+        """Takes width and height. Centers application on screen.
+        Allows different frame classes to easily adjust size of window."""
+
         offset_x = int(self.winfo_screenwidth()/2 - width/2)
         offset_y = int(self.winfo_screenheight()/2 - height/2)
         self.geometry(f'{width}x{height}+{offset_x}+{offset_y}')
