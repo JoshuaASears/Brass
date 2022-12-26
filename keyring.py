@@ -34,6 +34,8 @@ class KeyRing:
         except sqlite3.Error as e:
             print(e)
 
+        self._db.close()
+
     def update_table(self, update):
         """
         update: (domain:str, username:str, key:str, date_updated:str)
@@ -42,8 +44,12 @@ class KeyRing:
             INSERT INTO keyring(domain, username, key, date_updated)
             VALUES(?, ?, ?, ?);
             """
+        self.create_connection(self._name)
+
         self._db.cursor().execute(sql, update)
         self._db.commit()
+
+        self._db.close()
 
     def fetch_query(self, domain=False, username=False):
         """Queries KeyRing db for most recent key by domain and username."""
@@ -70,7 +76,44 @@ class KeyRing:
                     FROM keyring
                     WHERE domain = '{domain}' AND username = '{username}');
                 """
+
+        self.create_connection(self._name)
         cursor = self._db.cursor()
         cursor.execute(sql)
-        # remove beginning "{" and ending "}" string formatting added by SQLite
-        return [x[0].strip('{').rstrip('}') for x in cursor.fetchall()]
+        result_holder = self.yield_results(cursor.fetchall())
+        self._db.close()
+
+        # remove beginning "{" and ending "}" char added when yielded
+        return [x[0].strip('{').rstrip('}') for x in next(result_holder)]
+
+    def export_txt(self):
+        """Exports to a text file of all most recent key data to program root directory."""
+        sql = """
+            SELECT domain, username, key, date_updated
+            FROM keyring
+            GROUP BY domain, username
+            HAVING MAX(date_updated);
+            """
+        self.create_connection(self._name)
+        cursor = self._db.cursor()
+        cursor.execute(sql)
+        result_holder = self.yield_results(cursor.fetchall())
+        self._db.close()
+
+        with open(f'{self._name}s_keys.txt', 'w') as outfile:
+            string = 'domain, username\n' + '-' * 30 + '\n'
+            for row in next(result_holder):
+                string += f'{row[0]}, {row[1]}\n\tupdated {row[3][:10]}\n\tkey\t{row[2]}\n'
+
+            outfile.write(string)
+
+    def yield_results(self, cursor_obj):
+        """
+        Generator for cursor object.
+        SQL queries call this method so it they can close connection.
+        """
+        new_iterator = []
+        for each in cursor_obj:
+            new_iterator.append(each)
+        yield new_iterator
+
