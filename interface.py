@@ -5,7 +5,7 @@ from tkinter import ttk
 from string import ascii_uppercase, ascii_lowercase, digits
 from random import choice, shuffle
 # for database api
-import keyring as kr
+from scripts import keyring as kr
 import time
 
 
@@ -334,7 +334,7 @@ class App(tk.Tk):
 
         # configure root window
         self.title('NakedKeyRing')
-        self.iconbitmap('./icon/keyring.ico')
+        self.iconbitmap('./data/keyring.ico')
 
     def window_size(self, width, height):
         """Takes width and height. Centers application on screen.
