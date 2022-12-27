@@ -108,7 +108,7 @@ class KeyRing:
         result_holder = self.yield_results(cursor.fetchall())
         self._db.close()
 
-        with open(f'{self._name}s_keys.txt', 'w') as outfile:
+        with open(f'data\\{self._name}s_keys.txt', 'w') as outfile:
             string = 'domain, username\n' + '-' * 30 + '\n'  # header display
             for row in next(result_holder):
                 # [domain], [username]

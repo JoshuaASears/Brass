@@ -1,0 +1,1 @@
+pyinstaller interface.py -n NakedKeyRing -i keyring.ico --onefile

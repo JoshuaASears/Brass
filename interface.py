@@ -334,7 +334,7 @@ class App(tk.Tk):
 
         # configure root window
         self.title('NakedKeyRing')
-        self.iconbitmap('./data/keyring.ico')
+        self.iconbitmap('keyring.ico')
 
     def window_size(self, width, height):
         """Takes width and height. Centers application on screen.
