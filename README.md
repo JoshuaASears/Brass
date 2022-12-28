@@ -29,5 +29,5 @@
         <li>You may export a printable list of the most current Keys for all your Domain/Username by using the 'Export .txt' button. This outputs to the <b>data</b> folder in the program directory. The other file in the <b>data</b> folder is the database used for your profile.</li>
     </ol>
     <h3>Build</h3>
-    <p>Brass is built using the following python 3.11 builtin modules: tkinter, sqlite, string, date, random, and time. The source code are interface.py (GUI and flow control) and keyring.py (data persistence). The exe has been compiled using pyinstaller. Scripting by Joshua Sears.</p>
+    <p>Brass is built using the following python 3.11 builtin modules: tkinter, sqlite, string, date, random, and time. The source code are main.py (root window, main loop), interface.py (GUI and flow control) and keyring.py (data persistence). The exe has been compiled using pyinstaller. Scripting by Joshua Sears.</p>
 </body>
