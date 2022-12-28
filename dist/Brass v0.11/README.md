@@ -4,19 +4,20 @@
 </head>
 <body>
     <h3>v0.11 Release Notes -- 12/28/2022</h3>
-    <p>v0.11 is a minimum viable product. It is password manager for Windows desktop designed to generate customizable random password strings and save them to a Domain/Username.</p>
+    <p>This release is designed as minimum viable product. It is password manager for Windows desktop designed to generate customizable random password strings and save them to a Domain/Username.</p>
     <h3>Setup</h3>
-    <p>The following directory and files is required for use. Folders are in <b>bold</b>, files in <i>italics</i>.</p>
+    <p>For use of the application, download all files/folders from the <b>dist/Brass v0.11</b> folder. Wherever you store this folder on your device, ensure that the sub files and folders maintain the following organization (folders are in <b>bold</b>, files in <i>italics</i>):</p>
     <ul>
-        <li><b>Brass</b></li>
+        <li><b>Brass v0.11</b></li>
         <ul>
-            <li><b>Data</b></li>
+            <li><b>data</b></li>
                 <ul>
                     <li><i>keyring.db</i></li>
                     <li><i>exported_keyring.txt</i></li>
                 </ul>
             <li><i>Brass.ico</i></li>
             <li><i>Brass.exe</i></li>
+            <li><i>README.md</i></li>
         </ul>
     </ul>
     <h3>Use Instructions</h3>
@@ -29,5 +30,5 @@
         <li>You may export a printable list of the most current Keys for all your Domain/Username by using the 'Export .txt' button. This outputs the <i>exported_keyring.txt</i> file in the <b>data</b> folder in the program directory.</li>
     </ol>
     <h3>Build</h3>
-    <p>Brass is built using the following python 3.11 builtin modules: tkinter, sqlite, string, date, random, and time. The source code are main.py (root window, main loop), interface.py (GUI and flow control) and keyring.py (data persistence). The exe has been compiled using pyinstaller. Scripting by Joshua Sears.</p>
+    <p>Brass is built using the following Python 3.11 built-in modules: <i>tkinter</i>, <i>sqlite</i>, <i>string</i>, <i>date</i>, <i>random</i>, and <i>time</i>. The project specific source code is in <i>main.py</i> (root window with main loop), <i>interface.py</i> (GUI and flow control) and <i>keyring.py</i> (data persistence). <i>interface.py</i> and <i>keyring.py</i> source code is located in the <b>scripts</b> folder. The .exe has been compiled using <i>pyinstaller</i>. Scripting by Joshua Sears, 2022.</p>
 </body>
