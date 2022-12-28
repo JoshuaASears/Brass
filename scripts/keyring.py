@@ -2,7 +2,8 @@ import sqlite3
 
 
 class KeyRing:
-    """For a user, stores current and previous keys per username per domain."""
+    """Within the keyring.db, creates a table for each profile and
+    stores current and previous keys per username per domain."""
 
     def __init__(self, name):
         """Initialize KeyRing database by name."""
@@ -10,22 +11,22 @@ class KeyRing:
         self._db = None
 
         # connect to database, create table
-        self.create_connection(name)
+        self.create_connection()
         self.create_table()
 
-    def create_connection(self, name):
+    def create_connection(self):
         """Database connection."""
 
         try:
-            self._db = sqlite3.connect(f'.\\data\\{name}.db')
+            self._db = sqlite3.connect(f'.\\data\\keyring.db')
         except sqlite3.Error as e:
             print(e)
 
     def create_table(self):
         """Creates keyring table if it doesn't exist."""
 
-        sql_create_table = """
-            CREATE TABLE IF NOT EXISTS keyring(
+        sql_create_table = f"""
+            CREATE TABLE IF NOT EXISTS {self._name}(
                 domain TEXT,
                 username TEXT,
                 key TEXT,
@@ -38,20 +39,36 @@ class KeyRing:
 
         self._db.close()
 
+    def conn_ex_com_close(self, sql, update=None):
+        """Handler for SQLite processing:
+        Connect, cursor object, execute, [commit], close, and return result."""
+        self.create_connection()
+        cursor = self._db.cursor()
+
+        qry_result = None
+
+        # fetch request from db or commit to db
+        if update is None:
+            cursor.execute(sql)
+            qry_result = self.yield_results(cursor.fetchall())
+        else:
+            cursor.execute(sql, update)
+            self._db.commit()
+
+        self._db.close()
+        return qry_result
+
     def update_table(self, update):
         """
         update: (domain:str, username:str, key:str, date_updated:str)
         """
 
-        sql = """
-            INSERT INTO keyring(domain, username, key, date_updated)
+        sql = f"""
+            INSERT INTO {self._name}(domain, username, key, date_updated)
             VALUES(?, ?, ?, ?);
             """
 
-        self.create_connection(self._name)
-        self._db.cursor().execute(sql, update)
-        self._db.commit()
-        self._db.close()
+        self.conn_ex_com_close(sql, update)
 
     def fetch_query(self, domain=False, username=False):
         """Queries KeyRing db for three scenarios:
@@ -61,56 +78,48 @@ class KeyRing:
 
         sql = ''
         if not domain:
-            sql = """
+            sql = f"""
                 SELECT DISTINCT domain
-                FROM keyring
+                FROM {self._name}
                 ORDER BY domain;
                 """
         elif domain and not username:
             sql = f"""
                 SELECT DISTINCT username
-                FROM keyring
+                FROM {self._name}
                 WHERE domain = '{domain}'
                 ORDER BY username;
                 """
         elif username:
             sql = f"""
                 SELECT key
-                FROM keyring
+                FROM {self._name}
                 WHERE date_updated = (
                     SELECT MAX(date_updated)
-                    FROM keyring
+                    FROM {self._name}
                     WHERE domain = '{domain}' AND username = '{username}');
                 """
 
-        self.create_connection(self._name)
-        cursor = self._db.cursor()
-        cursor.execute(sql)
-        result_holder = self.yield_results(cursor.fetchall())
-        self._db.close()
+        qry_result = self.conn_ex_com_close(sql)
 
         # remove beginning "{" and ending "}" char added when yielded
-        return [x[0].strip('{').rstrip('}') for x in next(result_holder)]
+        return [x[0].strip('{').rstrip('}') for x in next(qry_result)]
 
     def export_txt(self):
         """Exports to a text file of all most recent key data to program root directory."""
 
-        sql = """
+        sql = f"""
             SELECT domain, username, key, date_updated
-            FROM keyring
+            FROM {self._name}
             GROUP BY domain, username
             HAVING MAX(date_updated);
             """
 
-        self.create_connection(self._name)
-        cursor = self._db.cursor()
-        cursor.execute(sql)
-        result_holder = self.yield_results(cursor.fetchall())
-        self._db.close()
+        qry_result = self.conn_ex_com_close(sql)
 
-        with open(f'data\\{self._name}s_keys.txt', 'w') as outfile:
+        with open('data\\exported_keyring.txt', 'w') as outfile:
             string = 'domain, username\n' + '-' * 30 + '\n'  # header display
-            for row in next(result_holder):
+            for row in next(qry_result):
                 # [domain], [username]
                 #       updated: [date]
                 #       key:     [key]

@@ -1,5 +1,5 @@
 first build arguments:
-pyinstaller interface.py -n NakedKeyRing -i keyring.ico --onefile
+pyinstaller interface.py -n Brass -i Brass.ico --onefile
 
 after modifying .spec, just run using:
-pyinstaller NakedKeyRing.spec
+pyinstaller Brass.spec

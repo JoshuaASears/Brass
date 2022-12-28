@@ -11,7 +11,7 @@ import time
 
 class ProfileFrame(ttk.Frame):
     """Initial frame of app.:
-    users enter string to initialize KeyRing object with associated .db."""
+    users enter string to initialize KeyRing object with associated table in keyring.db."""
 
     def __init__(self, app_window):
         super().__init__(app_window)
@@ -333,8 +333,8 @@ class App(tk.Tk):
         super().__init__()
 
         # configure root window
-        self.title('NakedKeyRing')
-        self.iconbitmap('keyring.ico')
+        self.title('Brass')
+        self.iconbitmap('Brass.ico')
 
     def window_size(self, width, height):
         """Takes width and height. Centers application on screen.
